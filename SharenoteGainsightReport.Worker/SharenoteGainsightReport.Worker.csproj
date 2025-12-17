@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>dotnet-ShareNote.StaffExport-20c897d9-5402-4d9e-9ed8-7cce672a7c1e</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="6.1.0" />
+		<PackageReference Include="NLog.Web.AspNetCore" Version="6.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SharenoteGainsightReport.DataAccess\SharenoteGainsight.DataAccess.csproj" />
+		<ProjectReference Include="..\SharenoteGainsightReport.Domain\SharenoteGainsightReport.Domain.csproj" />
+		<ProjectReference Include="..\SharenoteGainsightReport.Infrastructure\SharenoteGainsightReport.Infrastructure.csproj" />
+		<ProjectReference Include="..\SharenoteGainsightReport.Services\SharenoteGainsightReport.Services.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="NLog.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+</Project>
