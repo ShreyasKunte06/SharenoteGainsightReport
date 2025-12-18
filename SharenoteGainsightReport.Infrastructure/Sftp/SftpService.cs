@@ -26,9 +26,8 @@ namespace SharenoteGainsight.Infrastructure.Sftp
                 throw new FileNotFoundException("Local file not found.", localFilePath);
 
             // Determine quarter folder
-            //int month = DateTime.Now.Month;
+            int month = DateTime.Now.Month;
 
-            int month = 8;
             string currentQuarter = $"Q{((month - 1) / 3) + 1}";
 
             string sftpHost = _config["SFTP:Host"] ?? throw new InvalidOperationException("SFTP:Host missing");

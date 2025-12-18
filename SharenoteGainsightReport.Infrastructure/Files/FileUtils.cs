@@ -12,7 +12,7 @@ namespace SharenoteGainsight.Infrastructure.Files
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("File path must be provided.", nameof(filePath));
-            if (string.IsNullOrWhiteSpace(filePath))
+            if (string.IsNullOrWhiteSpace(archiveFolder))
                 throw new ArgumentException("Archive Folder must be provided.", nameof(archiveFolder));
             try
             {
@@ -30,7 +30,7 @@ namespace SharenoteGainsight.Infrastructure.Files
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("File path must be provided.", nameof(filePath));
-            if (string.IsNullOrWhiteSpace(filePath))
+            if (string.IsNullOrWhiteSpace(failedFolder))
                 throw new ArgumentException("Failed Folder must be provided.", nameof(failedFolder));
             try
             {

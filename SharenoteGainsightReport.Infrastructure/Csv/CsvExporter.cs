@@ -3,9 +3,9 @@ using CsvHelper.Configuration;
 using SharenoteGainsight.Domain;
 using System;
 using System.Collections.Generic;
-using System.Formats.Asn1;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SharenoteGainsight.Infrastructure.Csv
@@ -28,6 +28,9 @@ namespace SharenoteGainsight.Infrastructure.Csv
 
     public class CsvExporter : ICsvExporter
     {
+        // Use a larger buffer for file I/O to reduce small writes
+        private const int DefaultBufferSize = 64 * 1024;
+
         public async Task<bool> WriteToCsvAsync(IEnumerable<StaffRecord> records, string path)
         {
             if (records == null)
@@ -44,30 +47,42 @@ namespace SharenoteGainsight.Infrastructure.Csv
                     Directory.CreateDirectory(directory);
                 }
 
-                using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
-                using var writer = new StreamWriter(stream);
-                using var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)
-                {
-                    HasHeaderRecord = true
-                });
+                // Open file for asynchronous writes
+                await using var stream = new FileStream(
+                    path,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    DefaultBufferSize,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan);
 
+                await using var writer = new StreamWriter(stream, Encoding.UTF8, DefaultBufferSize);
+
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HasHeaderRecord = true,
+                    TrimOptions = TrimOptions.Trim,
+                    // You can configure more options here (Delimiter, Quote, ShouldQuote, etc.)
+                };
+
+                await using var csv = new CsvWriter(writer, config);
+
+                // Register mapping
                 csv.Context.RegisterClassMap<StaffRecordMap>();
 
-                // Write header
                 csv.WriteHeader<StaffRecord>();
                 csv.NextRecord();
 
-                // Write rows (empty collection = header only CSV, which is valid)
-                csv.WriteRecords(records);
+                // Write records asynchronously (CsvHelper supports async write APIs)
+                await csv.WriteRecordsAsync(records);
 
                 await writer.FlushAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                // Let caller decide how to log / handle
-                throw new InvalidOperationException(
-                    $"Failed to write CSV file at path '{path}'.", ex);
+                // Return false so callers (like StaffExportService) can decide how to log/handle the failure.
+                return false;
             }
         }
     }

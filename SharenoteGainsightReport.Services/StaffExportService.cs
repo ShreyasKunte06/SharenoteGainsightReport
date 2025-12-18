@@ -84,7 +84,8 @@ namespace SharenoteGainsight.Services
 
                 _logger.LogInformation("Fetched {count} staff records.", staffRecords.Count);
 
-                string reportsFolder = _config["Paths:Reports"];
+                string reportsRelative = _config["Paths:Reports"] ?? "Reports";
+                string reportsFolder = Path.GetFullPath(Path.Combine(rootPath, reportsRelative));
                 Directory.CreateDirectory(reportsFolder);
 
                 DateTime today = DateTime.Now;
@@ -98,16 +99,54 @@ namespace SharenoteGainsight.Services
                     return;
                 }
 
-                bool uploaded = await _sftp.UploadFileAsync(localPath, fileName);
-                if (uploaded)
+                int maxAttempts = 3; //retry Attempts
+                bool uploadSucceeded = false;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++)
                 {
-                    _logger.LogInformation("Upload succeeded. Moving to Archive.");
-                    var archiveFolder = Path.Combine(rootPath, "Archive");
-                    FileUtils.MoveToArchive(localPath, archiveFolder);
+                    try
+                    {
+                        _logger.LogInformation(
+                            "Upload attempt {attempt} of {maxAttempts} for file {file}",
+                            attempt, maxAttempts, fileName);
+
+                        uploadSucceeded = await _sftp.UploadFileAsync(localPath, fileName);
+
+                        if (uploadSucceeded)
+                        {
+                            _logger.LogInformation("Upload succeeded on attempt {attempt}", attempt);
+
+                            var archiveFolder = Path.Combine(rootPath, "Archive");
+                            FileUtils.MoveToArchive(localPath, archiveFolder);
+
+                            break; // ✅ STOP retrying once successful
+                        }
+
+                        _logger.LogWarning(
+                            "Upload attempt {attempt} returned false for file {file}",
+                            attempt, fileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            ex,
+                            "Upload attempt {attempt} failed due to exception for file {file}",
+                            attempt, fileName);
+                    }
+
+                    // Optional small delay between retries (prevents hammering SFTP)
+                    if (attempt < maxAttempts)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5));
+                    }
                 }
-                else
+
+                if (!uploadSucceeded)
                 {
-                    _logger.LogWarning("Upload failed. Moving to Failed folder.");
+                    _logger.LogError(
+                        "All {maxAttempts} upload attempts failed. Moving file to Failed folder.",
+                        maxAttempts);
+
                     var failedFolder = Path.Combine(rootPath, "Failed");
                     FileUtils.MoveToFailed(localPath, failedFolder);
                 }
