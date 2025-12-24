@@ -20,15 +20,31 @@ namespace SharenoteGainsight.Infrastructure.Sftp
             _logger = logger;
         }
 
+        /// <summary>
+        /// Uploads a local file to the configured SFTP server.
+        /// 
+        /// The file is uploaded into a quarter-based remote directory (Q1, Q2, Q3, Q4).
+        /// The method returns a boolean indicating success or failure; 
+        /// exceptions are logged and handled internally.
+        /// </summary>
+        /// <param name="localFilePath">Full path of the local file to upload.</param>
+        /// <param name="remoteFileName">Name of the file on the remote SFTP server.</param>
+        /// <returns>True if upload succeeds; otherwise false.</returns>
         public async Task<bool> UploadFileAsync(string localFilePath, string remoteFileName)
         {
+            if (string.IsNullOrWhiteSpace(localFilePath))
+                throw new ArgumentException(nameof(localFilePath));
+
             if (!File.Exists(localFilePath))
                 throw new FileNotFoundException("Local file not found.", localFilePath);
+
+            if (string.IsNullOrWhiteSpace(remoteFileName))
+                throw new ArgumentException(nameof(remoteFileName));
 
             // Determine quarter folder
             int month = DateTime.Now.Month;
 
-            string currentQuarter = $"Q{((month - 1) / 3) + 1}";
+            string currentQuarter = $"Q{((month - 1) / 3) + 1}"; //SFTP directory structure expects a string folder name like "Q1", "Q2", etc.
 
             string sftpHost = _config["SFTP:Host"] ?? throw new InvalidOperationException("SFTP:Host missing");
             string sftpUser = _config["SFTP:UserName"] ?? throw new InvalidOperationException("SFTP:UserName missing");
@@ -79,6 +95,14 @@ namespace SharenoteGainsight.Infrastructure.Sftp
             return isSuccess;
         }
 
+        /// <summary>
+        /// Creates the specified remote directory path recursively on the SFTP server.
+        /// 
+        /// This ensures that nested directories are created one level at a time,
+        /// which is required by SSH.NET.
+        /// </summary>
+        /// <param name="sftp">Active SFTP client connection.</param>
+        /// <param name="path">Remote directory path to create.</param>
         private static void CreateRemoteDirectoryRecursive(SftpClient sftp, string path)
         {
             var parts = path.Trim('/').Split('/');

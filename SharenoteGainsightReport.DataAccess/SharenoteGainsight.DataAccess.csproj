@@ -15,10 +15,4 @@
 		<ProjectReference Include="..\SharenoteGainsightReport.Domain\SharenoteGainsightReport.Domain.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <None Update="SQL\GetStaff.sql">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	</ItemGroup>
-
 </Project>

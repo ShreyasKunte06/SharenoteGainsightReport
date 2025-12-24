@@ -10,8 +10,21 @@ using System.Threading.Tasks;
 
 namespace SharenoteGainsight.Infrastructure.Csv
 {
+    /// <summary>
+    /// CsvHelper mapping configuration for <see cref="StaffRecord"/>.
+    ///
+    /// This class defines the exact column headers and their order
+    /// in the generated CSV file. Column names are intentionally
+    /// matched to the format expected by downstream consumers
+    /// (e.g., Gainsight), including spaces and uppercase headers.
+    /// </summary>
     public sealed class StaffRecordMap : ClassMap<StaffRecord>
     {
+        /// <summary>
+        /// Initializes the CSV column mappings for StaffRecord.
+        /// Each property is explicitly mapped to avoid reliance
+        /// on reflection-based defaults and to ensure stable output.
+        /// </summary>
         public StaffRecordMap()
         {
             Map(m => m.FName).Name("FName");
@@ -26,6 +39,19 @@ namespace SharenoteGainsight.Infrastructure.Csv
         }
     }
 
+    /// <summary>
+    /// Responsible for exporting staff data into a CSV file.
+    ///
+    /// This class encapsulates all CSV-related logic, including:
+    /// - Directory creation
+    /// - CsvHelper configuration
+    /// - Header and record writing
+    /// - Safe asynchronous file I/O
+    ///
+    /// Errors are intentionally not logged here and instead
+    /// surfaced to the caller via a boolean return value,
+    /// allowing higher-level services to decide how to react.
+    /// </summary>
     public class CsvExporter : ICsvExporter
     {
         // Use a larger buffer for file I/O to reduce small writes

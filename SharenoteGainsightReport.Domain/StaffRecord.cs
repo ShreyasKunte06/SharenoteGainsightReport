@@ -6,6 +6,20 @@ using System.Threading.Tasks;
 
 namespace SharenoteGainsight.Domain
 {
+    /// <summary>
+    /// Represents a single staff record retrieved from the ShareNote database
+    /// and exported to external systems (e.g., Gainsight) via CSV and SFTP.
+    ///
+    /// This is a pure domain model:
+    /// - No business logic
+    /// - No infrastructure concerns
+    /// - Used across DataAccess, CSV export, and SFTP workflows
+    ///
+    /// All properties are nullable to safely handle:
+    /// - Missing database values
+    /// - Optional columns
+    /// - Partial or legacy data
+    /// </summary>
     public class StaffRecord
     {
         public string? FName { get; set; }
